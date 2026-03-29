@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESPORTS PRO MAX | OFFICIAL APP</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #ff8c00;
+            --secondary: #ff0055;
+            --accent: #00f2ff;
+            --bg-dark: #050505;
+            --bg-card: #121214;
+            --text-main: #ffffff;
+            --text-dim: #a0a0a0;
+            --glass: rgba(255, 255, 255, 0.05);
+            --neon-shadow: 0 0 20px rgba(255, 140, 0, 0.5);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-main);
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* --- PRELOADER --- */
+        #preloader {
+            position: fixed; width: 100%; height: 100vh; background: #000;
+            z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .loader-logo { font-family: 'Orbitron'; font-size: 30px; color: var(--primary); text-shadow: var(--neon-shadow); animation: pulse 1.5s infinite; }
+        
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; transform: scale(1.1); } 100% { opacity: 0.5; } }
+
+        /* --- UI UTILITIES --- */
+        .container { display: none; padding: 20px; animation: slideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1); min-height: 100vh; padding-bottom: 100px; }
+        .active { display: block; }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
+
+        .glass-card { background: var(--glass); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; box-shadow: 0 8px 32px 0 rgba(0,0,0,0.8); }
+
+        .btn-neon {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            border: none; color: white; padding: 12px 25px; border-radius: 12px;
+            font-family: 'Orbitron'; font-weight: bold; cursor: pointer;
+            box-shadow: var(--neon-shadow); transition: 0.3s; width: 100%;
+        }
+        .btn-neon:active { transform: scale(0.95); }
+
+        /* --- HEADER --- */
+        header {
+            background: rgba(0,0,0,0.9); padding: 15px 20px; display: flex; justify-content: space-between;
+            align-items: center; position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid #333;
+        }
+        .brand { font-family: 'Orbitron'; font-size: 18px; font-weight: 900; color: var(--primary); }
+        .wallet-pill { background: #1a1a1a; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--primary); font-size: 14px; display: flex; align-items: center; gap: 8px; }
+
+        /* --- GAME SELECTION --- */
+        #page-selector { text-align: center; justify-content: center; align-items: center; height: 90vh; flex-direction: column; display: none; }
+        #page-selector.active { display: flex; }
+        .game-grid { display: grid; grid-template-columns: 1fr; gap: 20px; width: 100%; max-width: 400px; padding: 20px; }
+        .game-box { 
+            position: relative; height: 180px; border-radius: 25px; overflow: hidden; 
+            cursor: pointer; border: 2px solid transparent; transition: 0.4s;
+        }
+        .game-box:hover { border-color: var(--primary); transform: translateY(-5px); }
+        .game-box img { width: 100%; height: 100%; object-fit: cover; opacity: 0.7; }
+        .game-box h2 { position: absolute; bottom: 10px; left: 20px; font-family: 'Orbitron'; font-size: 24px; text-shadow: 2px 2px 10px #000; }
+
+        /* --- MATCH CARDS --- */
+        .match-card { background: var(--bg-card); border-radius: 20px; margin-bottom: 25px; border: 1px solid #222; overflow: hidden; }
+        .match-img { width: 100%; height: 140px; background-size: cover; background-position: center; position: relative; }
+        .match-img::after { content: ''; position: absolute; bottom: 0; width: 100%; height: 50%; background: linear-gradient(transparent, var(--bg-card)); }
+        .match-body { padding: 15px; }
+        .match-tags { display: flex; gap: 10px; margin-bottom: 10px; }
+        .tag { background: #333; font-size: 10px; padding: 3px 8px; border-radius: 5px; color: var(--primary); }
+
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 15px 0; }
+        .stat-item { background: #000; padding: 10px; border-radius: 12px; text-align: center; border: 1px solid #222; }
+        .stat-item span { display: block; font-size: 10px; color: var(--text-dim); }
+        .stat-item b { color: var(--primary); font-size: 14px; }
+
+        /* --- WALLET & QR --- */
+        .qr-container { background: white; padding: 15px; border-radius: 15px; display: inline-block; margin: 20px 0; }
+        .qr-container img { width: 180px; height: 180px; }
+        .price-chip { display: inline-block; padding: 8px 15px; background: #222; border: 1px solid #444; border-radius: 10px; margin: 5px; cursor: pointer; }
+        .price-chip.selected { border-color: var(--primary); background: rgba(255,140,0,0.1); }
+
+        /* --- NAVBAR --- */
+        nav {
+            position: fixed; bottom: 0; width: 100%; background: rgba(0,0,0,0.95);
+            display: flex; justify-content: space-around; padding: 15px 0;
+            border-top: 1px solid #333; z-index: 1000;
+        }
+        nav div { color: var(--text-dim); text-align: center; font-size: 10px; cursor: pointer; transition: 0.3s; }
+        nav div svg { width: 24px; height: 24px; display: block; margin: 0 auto 5px; fill: currentColor; }
+        nav div.nav-active { color: var(--primary); transform: translateY(-5px); }
+
+        /* --- ADMIN PANEL --- */
+        .admin-section { border-bottom: 1px solid #333; padding-bottom: 20px; margin-bottom: 20px; }
+        input, select, textarea { 
+            width: 100%; background: #000; border: 1px solid #333; color: #fff; 
+            padding: 12px; border-radius: 10px; margin-top: 10px; outline: none;
+        }
+        input:focus { border-color: var(--primary); }
+
+        /* --- NOTIFICATION MOCK --- */
+        .notif-pill { position: fixed; top: 80px; right: -300px; background: var(--primary); color: #000; padding: 10px 20px; border-radius: 10px 0 0 10px; font-weight: bold; transition: 0.5s; z-index: 2000; }
+
+    </style>
+</head>
+<body>
+
+<div id="preloader">
+    <div class="loader-logo">ESPORTS PRO MAX</div>
+    <p style="color: gray; margin-top: 10px;">Loading Battlefield...</p>
+</div>
+
+<header id="main-header" style="display: none;">
+    <div class="brand">E-PRO</div>
+    <div class="wallet-pill" onclick="showWallet()">
+        🪙 <span id="top-balance">100</span>
+    </div>
+</header>
+
+<div id="notif" class="notif-pill">Someone just won ₹500!</div>
+
+<!-- --- 🎮 GAME SELECTION SCREEN --- -->
+<div id="page-selector" class="container active">
+    <h1 style="font-family: 'Orbitron'; color: var(--primary);">SELECT GAME</h1>
+    <div class="game-grid">
+        <div class="game-box" onclick="initGame('FF')">
+            <img src="https://images8.alphacoders.com/105/1052602.jpg">
+            <h2>FREE FIRE</h2>
+        </div>
+        <div class="game-box" onclick="initGame('BGMI')">
+            <img src="https://images.moneycontrol.com/static-mcnews/2021/05/Battlegrounds-Mobile-India.jpg">
+            <h2>BGMI</h2>
+        </div>
+        <p style="color: gray; font-size: 12px;">More games coming soon...</p>
+    </div>
+</div>
+
+<!-- --- 🏠 HOME: TOURNAMENTS --- -->
+<div id="page-home" class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 id="current-category" style="margin:0; font-family: 'Orbitron';">FREE FIRE</h2>
+        <span onclick="tab('page-selector')" style="color: var(--primary); font-size: 12px;">Change Game</span>
+    </div>
+    
+    <div id="match-list">
+        <!-- Matches Inject Here -->
+    </div>
+</div>
+
+<!-- --- 💰 WALLET PAGE --- -->
+<div id="page-wallet" class="container">
+    <div class="glass-card" style="text-align: center; background: linear-gradient(135deg, #121214 0%, #251000 100%);">
+        <p style="color: var(--text-dim); margin: 0;">Total Balance</p>
+        <h1 style="font-size: 50px; margin: 10px 0; font-family: 'Orbitron';">₹<span id="wall-balance">100</span></h1>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-neon" onclick="showSubPage('add-cash')">ADD CASH</button>
+            <button class="btn-neon" style="background: #222;" onclick="showSubPage('withdraw-cash')">WITHDRAW</button>
+        </div>
+    </div>
+
+    <!-- Add Cash Section -->
+    <div id="add-cash" style="display: none; margin-top: 30px;" class="glass-card">
+        <h3>Deposit Money</h3>
+        <p style="font-size: 12px; color: var(--text-dim);">Scan QR to pay and enter Transaction ID</p>
+        <div class="qr-container">
+            <!-- Google Chart API for QR -->
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=shyam@upi&pn=Admin&am=100" id="qr-img">
+        </div>
+        <div id="price-presets">
+            <div class="price-chip" onclick="setAmt(100)">₹100</div>
+            <div class="price-chip" onclick="setAmt(200)">₹200</div>
+            <div class="price-chip" onclick="setAmt(500)">₹500</div>
+        </div>
+        <input type="number" id="dep-amount" placeholder="Amount" value="100">
+        <input type="text" id="dep-txn" placeholder="Transaction ID (UTR)">
+        <button class="btn-neon" style="margin-top: 15px;" onclick="deposit()">SUBMIT PAYMENT</button>
+    </div>
+
+    <!-- Withdraw Section -->
+    <div id="withdraw-cash" style="display: none; margin-top: 30px;" class="glass-card">
+        <h3>Withdraw Rewards</h3>
+        <p style="color: var(--secondary); font-size: 11px;">* Minimum Withdrawal: ₹200</p>
+        <p style="color: var(--secondary); font-size: 11px;">* Min Wallet Balance Required: ₹200</p>
+        
+        <input type="number" id="wd-amount" placeholder="Enter Amount (Min 200)">
+        <input type="text" id="wd-upi" placeholder="UPI ID (e.g. name@upi)">
+        <button class="btn-neon" style="margin-top: 15px;" onclick="withdraw()">WITHDRAW NOW</button>
+    </div>
+
+    <h3 style="margin-top: 30px;">Transaction History</h3>
+    <div id="history">
+        <p style="color: gray; font-size: 13px;">No recent transactions.</p>
+    </div>
+</div>
+
+<!-- --- 👤 PROFILE PAGE --- -->
+<div id="page-profile" class="container">
+    <div class="glass-card" style="text-align: center;">
+        <div style="width: 80px; height: 80px; background: var(--primary); border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 30px;">👤</div>
+        <h2 id="prof-name" style="margin: 0;">PRO GAMER</h2>
+        <p id="prof-uid" style="color: gray; font-size: 12px; margin: 5px 0 15px;">UID: 10203040</p>
+        <button onclick="editProf()" style="background: #333; border: none; color: #fff; padding: 5px 15px; border-radius: 5px; font-size: 12px;">Edit Profile</button>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px;">
+        <div class="glass-card" style="padding: 15px; text-align: center;">
+            <b style="color: var(--primary); font-size: 20px;">05</b>
+            <span style="display: block; font-size: 10px; color: gray;">Matches Played</span>
+        </div>
+        <div class="glass-card" style="padding: 15px; text-align: center;">
+            <b style="color: var(--accent); font-size: 20px;">₹0</b>
+            <span style="display: block; font-size: 10px; color: gray;">Total Won</span>
+        </div>
+    </div>
+
+    <h3 style="margin-top: 25px; border-left: 4px solid var(--primary); padding-left: 10px;">My Tournaments</h3>
+    <div id="my-matches-list">
+        <p style="color: gray; font-size: 12px;">Join a match to see details here.</p>
+    </div>
+
+    <div class="glass-card" style="margin-top: 30px;">
+        <h4>Support & More</h4>
+        <div onclick="window.location.href='https://wa.me/911234567890'" style="padding: 10px 0; border-bottom: 1px solid #222; font-size: 14px; display: flex; justify-content: space-between;">
+            Contact Support <span>💬</span>
+        </div>
+        <div onclick="alert('Share link: https://epro.matches/invite?ref=123')" style="padding: 10px 0; border-bottom: 1px solid #222; font-size: 14px; display: flex; justify-content: space-between;">
+            Refer & Earn <span>🔥</span>
+        </div>
+        <div onclick="tab('page-admin')" style="padding: 10px 0; font-size: 14px; color: #444;">
+            Admin Access <span>🔒</span>
+        </div>
+    </div>
+</div>
+
+<!-- --- 🔒 ADMIN PANEL --- -->
+<div id="page-admin" class="container">
+    <div id="admin-auth">
+        <h2 style="font-family: 'Orbitron'; text-align: center;">ADMIN LOGIN</h2>
+        <input type="password" id="admin-key" placeholder="Enter Admin Password">
+        <button class="btn-neon" style="margin-top: 15px;" onclick="verifyAdmin()">UNLOCK PANEL</button>
+        <button class="btn-neon" style="margin-top: 10px; background: #222;" onclick="tab('page-profile')">BACK</button>
+    </div>
+
+    <div id="admin-dashboard" style="display: none;">
+        <div class="admin-section">
+            <h3>Create New Match</h3>
+            <select id="adm-cat">
+                <option value="FF">FREE FIRE</option>
+                <option value="BGMI">BGMI</option>
+            </select>
+            <input type="text" id="adm-title" placeholder="Match Title">
+            <input type="text" id="adm-map" placeholder="Map (Bermuda/Erangel)">
+            <input type="number" id="adm-fee" placeholder="Entry Fee (₹)">
+            <input type="number" id="adm-prize" placeholder="Prize Pool (₹)">
+            <input type="text" id="adm-time" placeholder="Match Time (9:00 PM)">
+            <button class="btn-neon" style="margin-top: 15px;" onclick="publishMatch()">🚀 PUBLISH TOURNAMENT</button>
+        </div>
+
+        <h3>Active Tournaments</h3>
+        <div id="adm-match-list"></div>
+    </div>
+</div>
+
+<!-- --- 📱 BOTTOM NAV --- -->
+<nav id="navbar" style="display: none;">
+    <div id="nav-home" onclick="tab('page-home', this)">
+        <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Home
+    </div>
+    <div id="nav-wallet" onclick="tab('page-wallet', this)">
+        <svg viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>Wallet
+    </div>
+    <div id="nav-profile" onclick="tab('page-profile', this)">
+        <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>Profile
+    </div>
+</nav>
+
+<script>
+    // --- DATABASE & CORE LOGIC ---
+    let balance = parseInt(localStorage.getItem('balance')) || 100;
+    let uName = localStorage.getItem('uName') || "Pro_Player";
+    let uUID = localStorage.getItem('uUID') || "50607080";
+    let joinedIds = JSON.parse(localStorage.getItem('joinedIds')) || [];
+    let currentCategory = "FF";
+
+    // Initial Start
+    setTimeout(() => {
+        document.getElementById('preloader').style.display = 'none';
+        document.getElementById('main-header').style.display = 'flex';
+        updateUI();
+    }, 2000);
+
+    function updateUI() {
+        document.getElementById('top-balance').innerText = balance;
+        document.getElementById('wall-balance').innerText = balance;
+        document.getElementById('prof-name').innerText = uName;
+        document.getElementById('prof-uid').innerText = "UID: " + uUID;
+        localStorage.setItem('balance', balance);
+        renderMatches();
+        renderMyMatches();
+    }
+
+    function tab(pageId, el) {
+        document.querySelectorAll('.container').forEach(c => c.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        
+        if(pageId === 'page-selector' || pageId === 'page-admin') {
+            document.getElementById('navbar').style.display = 'none';
+        } else {
+            document.getElementById('navbar').style.display = 'flex';
+        }
+
+        if(el) {
+            document.querySelectorAll('nav div').forEach(n => n.classList.remove('nav-active'));
+            el.classList.add('nav-active');
+        }
+    }
+
+    // --- GAME INIT ---
+    function initGame(cat) {
+        currentCategory = cat;
+        document.getElementById('current-category').innerText = cat === 'FF' ? "FREE FIRE" : "BGMI";
+        tab('page-home', document.getElementById('nav-home'));
+        showNotif("Game Mode: " + currentCategory);
+    }
+
+    // --- MATCH SYSTEM ---
+    function renderMatches() {
+        const list = document.getElementById('match-list');
+        const tours = JSON.parse(localStorage.getItem('tournaments')) || [];
+        const filtered = tours.filter(t => t.category === currentCategory);
+
+        list.innerHTML = filtered.length ? "" : `<div style="text-align:center; padding:50px; color:gray;">No ${currentCategory} Matches Live.</div>`;
+
+        filtered.forEach(t => {
+            const isJoined = joinedIds.includes(t.id);
+            list.innerHTML += `
+                <div class="match-card">
+                    <div class="match-img" style="background-image: url('${currentCategory === 'FF' ? 'https://images.alphacoders.com/105/1052602.jpg' : 'https://images.moneycontrol.com/static-mcnews/2021/05/Battlegrounds-Mobile-India.jpg'}')"></div>
+                    <div class="match-body">
+                        <div class="match-tags">
+                            <span class="tag">${t.map}</span>
+                            <span class="tag">SOLO</span>
+                        </div>
+                        <h3 style="margin:0;">${t.title}</h3>
+                        <p style="font-size:12px; color:var(--primary); margin:5px 0;">⏰ Time: ${t.time}</p>
+                        <div class="stat-grid">
+                            <div class="stat-item"><span>PRIZE</span><b>₹${t.prize}</b></div>
+                            <div class="stat-item"><span>PER KILL</span><b>₹10</b></div>
+                            <div class="stat-item"><span>ENTRY</span><b>₹${t.fee}</b></div>
+                        </div>
+                        <button class="btn-neon" ${isJoined ? 'disabled style="background:#222"' : `onclick="joinMatch(${t.id}, ${t.fee})"`}>
+                            ${isJoined ? "ALREADY JOINED" : "JOIN TOURNAMENT"}
+                        </button>
+                    </div>
+                </div>`;
+        });
+    }
+
+    function joinMatch(id, fee) {
+        if(balance < fee) return alert("Insufficient Balance! Please Add Cash.");
+        let gName = prompt("Enter Game In-Name:");
+        if(!gName) return;
+
+        balance -= fee;
+        joinedIds.push(id);
+        localStorage.setItem('joinedIds', JSON.stringify(joinedIds));
+        showNotif("Successfully Joined!");
+        updateUI();
+    }
+
+    function renderMyMatches() {
+        const div = document.getElementById('my-matches-list');
+        const tours = JSON.parse(localStorage.getItem('tournaments')) || [];
+        const mine = tours.filter(t => joinedIds.includes(t.id));
+
+        if(!mine.length) return;
+
+        div.innerHTML = "";
+        mine.forEach(t => {
+            div.innerHTML += `
+                <div class="glass-card" style="margin-bottom:10px; border-left: 4px solid var(--primary);">
+                    <div style="display:flex; justify-content:space-between;">
+                        <b>${t.title}</b>
+                        <span style="font-size:10px; color:gray;">${t.time}</span>
+                    </div>
+                    <div style="background:rgba(0,0,0,0.3); padding:10px; border-radius:10px; margin-top:10px; font-size:13px;">
+                        Room ID: <span style="color:var(--primary)">${t.roomId || 'Wait 15 mins'}</span> 
+                        <button onclick="copy('${t.roomId}')" style="float:right; background:none; border:none; color:var(--accent);">Copy</button>
+                        <br>Pass: <span style="color:var(--primary)">${t.roomPass || 'Wait 15 mins'}</span>
+                        <button onclick="copy('${t.roomPass}')" style="float:right; background:none; border:none; color:var(--accent);">Copy</button>
+                    </div>
+                </div>`;
+        });
+    }
+
+    // --- WALLET SYSTEM ---
+    function showSubPage(id) {
+        document.getElementById('add-cash').style.display = 'none';
+        document.getElementById('withdraw-cash').style.display = 'none';
+        document.getElementById(id).style.display = 'block';
+    }
+
+    function setAmt(a) {
+        document.getElementById('dep-amount').value = a;
+        document.getElementById('qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=shyam@upi&pn=Admin&am=${a}`;
+    }
+
+    function deposit() {
+        let amt = parseInt(document.getElementById('dep-amount').value);
+        let txn = document.getElementById('dep-txn').value;
+        if(!txn) return alert("Enter Transaction ID!");
+        
+        balance += amt;
+        addHistory("Deposit", amt);
+        alert("Payment Submitted! Balance will be updated after verification.");
+        updateUI();
+    }
+
+    function withdraw() {
+        let amt = parseInt(document.getElementById('wd-amount').value);
+        let upi = document.getElementById('wd-upi').value;
+
+        if(balance < 200) return alert("Withdrawal requires at least ₹200 wallet balance.");
+        if(amt < 200) return alert("Minimum withdrawal is ₹200.");
+        if(amt > balance) return alert("Insufficient balance.");
+        if(!upi.includes('@')) return alert("Enter valid UPI ID!");
+
+        balance -= amt;
+        addHistory("Withdraw", amt);
+        alert("Withdrawal Request Sent! You will receive money in 2-4 hours.");
+        updateUI();
+    }
+
+    function addHistory(type, amt) {
+        const hist = document.getElementById('history');
+        const div = document.createElement('div');
+        div.style = "display:flex; justify-content:space-between; padding:10px; background:#111; border-radius:10px; margin-top:5px; font-size:12px;";
+        div.innerHTML = `<span>${type} Request</span> <span style="color:${type==='Deposit'?'var(--primary)':'red'}">${type==='Deposit'?'+':'-'}₹${amt}</span>`;
+        if(hist.querySelector('p')) hist.innerHTML = "";
+        hist.prepend(div);
+    }
+
+    // --- ADMIN SYSTEM ---
+    function verifyAdmin() {
+        if(document.getElementById('admin-key').value === "Shyam 100") {
+            document.getElementById('admin-auth').style.display = 'none';
+            document.getElementById('admin-dashboard').style.display = 'block';
+            renderAdminMatches();
+        } else { alert("Wrong Password!"); }
+    }
+
+    function publishMatch() {
+        const t = {
+            id: Date.now(),
+            category: document.getElementById('adm-cat').value,
+            title: document.getElementById('adm-title').value,
+            map: document.getElementById('adm-map').value,
+            fee: document.getElementById('adm-fee').value,
+            prize: document.getElementById('adm-prize').value,
+            time: document.getElementById('adm-time').value,
+            roomId: "", roomPass: ""
+        };
+        let tours = JSON.parse(localStorage.getItem('tournaments')) || [];
+        tours.push(t);
+        localStorage.setItem('tournaments', JSON.stringify(tours));
+        alert("Match Published!");
+        renderAdminMatches();
+        updateUI();
+    }
+
+    function renderAdminMatches() {
+        const div = document.getElementById('adm-match-list');
+        const tours = JSON.parse(localStorage.getItem('tournaments')) || [];
+        div.innerHTML = "";
+        tours.forEach(t => {
+            div.innerHTML += `
+                <div class="glass-card" style="margin-bottom:10px;">
+                    <b>[${t.category}] ${t.title}</b>
+                    <input id="ri-${t.id}" placeholder="Room ID" value="${t.roomId}">
+                    <input id="rp-${t.id}" placeholder="Pass" value="${t.roomPass}">
+                    <button onclick="updateRoom(${t.id})" style="background:green; border:none; color:white; padding:5px; border-radius:5px; margin-top:5px;">Update Room</button>
+                    <button onclick="delMatch(${t.id})" style="background:red; border:none; color:white; padding:5px; border-radius:5px;">Delete</button>
+                </div>`;
+        });
+    }
+
+    function updateRoom(id) {
+        let tours = JSON.parse(localStorage.getItem('tournaments'));
+        let idx = tours.findIndex(t => t.id === id);
+        tours[idx].roomId = document.getElementById(`ri-${id}`).value;
+        tours[idx].roomPass = document.getElementById(`rp-${id}`).value;
+        localStorage.setItem('tournaments', JSON.stringify(tours));
+        alert("Updated!");
+        updateUI();
+    }
+
+    function delMatch(id) {
+        let tours = JSON.parse(localStorage.getItem('tournaments')).filter(t => t.id !== id);
+        localStorage.setItem('tournaments', JSON.stringify(tours));
+        renderAdminMatches();
+        updateUI();
+    }
+
+    // --- HELPERS ---
+    function showNotif(msg) {
+        const n = document.getElementById('notif');
+        n.innerText = msg;
+        n.style.right = "0px";
+        setTimeout(() => n.style.right = "-300px", 3000);
+    }
+
+    function copy(txt) {
+        if(!txt) return;
+        navigator.clipboard.writeText(txt);
+        showNotif("Copied to Clipboard!");
+    }
+
+    function editProf() {
+        let n = prompt("New Name:", uName);
+        if(n) { uName = n; localStorage.setItem('uName', n); updateUI(); }
+    }
+
+</script>
+
+</body>
+</html>
