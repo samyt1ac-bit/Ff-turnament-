@@ -4,37 +4,357 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ARENA PRO | ULTIMATE ESPORTS</title>
-
-    <!-- Google Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;900&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;900&family=Poppins:wght@200;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
     <style>
         :root {
-            --primary: #ff8c00; 
-            --secondary: #ff0055;
-            --accent: #00f2ff;
-            --bg-dark: #050505;
-            --bg-card: #0f0f12;
-            --glass: rgba(255, 255, 255, 0.05);
-            --neon-shadow: 0 0 20px rgba(255, 140, 0, 0.3);
+            --primary: #ff8c00; --secondary: #ff0055; --accent: #00f2ff;
+            --bg-dark: #050505; --bg-card: #0f0f12; --text-main: #ffffff;
+            --text-dim: #b0b0b0; --glass: rgba(255, 255, 255, 0.03);
+            --neon-shadow: 0 0 15px rgba(255, 140, 0, 0.3);
+            --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; margin: 0; padding: 0; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-dark); color: var(--text-main); overflow-x: hidden; }
+
+        #preloader { position: fixed; width: 100%; height: 100vh; background: #000; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .loader-logo { font-family: 'Orbitron'; font-size: 28px; color: var(--primary); text-shadow: var(--neon-shadow); animation: glow 1.5s infinite alternate; }
+        @keyframes glow { from { opacity: 0.5; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        .container { display: none; padding: 20px; min-height: 100vh; padding-bottom: 110px; animation: slideUp 0.4s ease-out; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
-        body { 
-            font-family: 'Poppins', sans-serif; 
-            background: var(--bg-dark); 
-            color: #fff; 
-            overflow-x: hidden;
-            background-image: radial-gradient(circle at top right, #1a1a1a, #050505);
+        .glass-card { background: var(--glass); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 20px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .btn-premium { background: var(--gradient); border: none; color: white; padding: 14px; border-radius: 12px; font-family: 'Orbitron'; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; font-size: 13px; box-shadow: var(--neon-shadow); }
+
+        header { background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); padding: 15px 20px; display: none; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 2000; border-bottom: 1px solid #222; }
+        .brand-text { font-family: 'Orbitron'; font-weight: 900; font-size: 20px; color: var(--primary); }
+
+        nav { position: fixed; bottom: 0; width: 100%; background: #0a0a0c; display: none; justify-content: space-around; padding: 12px 0; border-top: 1px solid #1a1a1a; z-index: 2000; }
+        nav div { color: var(--text-dim); text-align: center; font-size: 11px; cursor: pointer; }
+        nav div i { font-size: 20px; display: block; margin-bottom: 4px; }
+        nav div.nav-active { color: var(--primary); text-shadow: 0 0 10px var(--primary); }
+
+        input, select { width: 100%; background: rgba(0,0,0,0.6); border: 1px solid #222; color: #fff; padding: 12px; border-radius: 10px; margin-top: 10px; border-left: 3px solid var(--primary); }
+
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .stat-item { background: rgba(255,255,255,0.03); padding: 10px; border-radius: 12px; text-align: center; border: 1px solid #222; }
+        .stat-item span { display: block; font-size: 16px; font-weight: bold; color: var(--accent); }
+
+        .match-card { background: var(--bg-card); border-radius: 20px; margin-bottom: 20px; overflow: hidden; border: 1px solid #1a1a1a; }
+        .match-banner { height: 110px; width: 100%; object-fit: cover; opacity: 0.6; }
+        .match-info { padding: 15px; }
+        .slot-bar { height: 6px; background: #222; border-radius: 10px; margin-top: 12px; overflow: hidden; }
+        .slot-fill { height: 100%; background: var(--gradient); width: 0%; transition: 1s; }
+
+        /* MODAL STYLE */
+        #rules-modal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:5000; display:none; align-items:center; justify-content:center; padding:20px; }
+    </style>
+</head>
+<body>
+
+    <div id="preloader"><div class="loader-logo">ARENA PRO</div></div>
+
+    <header id="main-header">
+        <div class="brand-text">ARENA PRO</div>
+        <div onclick="tab('page-wallet', document.getElementById('nav-wallet'))" style="background:#111; padding:8px 15px; border-radius:30px; border:1px solid var(--primary); font-size:14px; cursor: pointer; font-weight: bold; color:gold;">
+            <i class="fa-solid fa-coins"></i> <span id="top-balance">0</span>
+        </div>
+    </header>
+
+    <!-- AUTH SECTION -->
+    <div id="page-auth" class="container" style="padding-top: 60px; text-align: center;">
+        <h1 style="font-family: 'Orbitron'; font-size: 30px;">ARENA <span style="color: var(--primary);">PRO</span></h1>
+        <div id="login-form" class="glass-card" style="margin-top: 30px;">
+            <input type="email" id="log-email" placeholder="Email Address">
+            <input type="password" id="log-pass" placeholder="Password">
+            <button class="btn-premium" onclick="handleLogin()">LOGIN</button>
+            <button onclick="handleGoogleLogin()" style="background:white; color:black; border:none; padding:12px; width:100%; border-radius:10px; margin-top:15px; font-weight:bold; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_Logo.svg" width="16"> GOOGLE LOGIN
+            </button>
+            <p onclick="toggleAuth(false)" style="margin-top: 20px; font-size: 13px; color: var(--accent);">Create Account</p>
+        </div>
+        <div id="register-form" class="glass-card" style="display: none; margin-top: 30px;">
+            <input type="text" id="reg-nick" placeholder="Game Name">
+            <input type="email" id="reg-email" placeholder="Email">
+            <input type="password" id="reg-pass" placeholder="Password">
+            <button class="btn-premium" onclick="handleRegister()">SIGN UP</button>
+            <p onclick="toggleAuth(true)" style="margin-top: 20px; font-size: 13px; color: #888;">Login Instead</p>
+        </div>
+        <div id="extra-details-form" class="glass-card" style="display: none; margin-top: 30px;">
+            <input type="text" id="extra-nick" placeholder="Choose Game Nickname">
+            <button class="btn-premium" onclick="saveExtraDetails()">START ARENA</button>
+        </div>
+    </div>
+
+    <!-- HOME PAGE -->
+    <div id="page-selector" class="container">
+        <div class="glass-card">
+            <h4 style="font-family:'Orbitron'; font-size:12px; color:var(--primary);">DASHBOARD</h4>
+            <div class="stat-grid">
+                <div class="stat-item"><span id="stat-played">0</span><p style="font-size:9px; color:gray;">PLAYED</p></div>
+                <div class="stat-item"><span id="stat-won">0</span><p style="font-size:9px; color:gray;">WINNINGS</p></div>
+                <div class="stat-item"><span id="stat-uid">---</span><p style="font-size:9px; color:gray;">USER ID</p></div>
+            </div>
+        </div>
+        <h3 style="font-family: 'Orbitron'; font-size: 16px; color: var(--primary);">SELECT GAME</h3>
+        <div class="match-card" onclick="initGame('FF')">
+            <img src="https://images8.alphacoders.com/105/1052602.jpg" class="match-banner">
+            <div style="padding:15px; background:linear-gradient(transparent, #000); margin-top:-50px; position:relative;"><h2>FREE FIRE</h2></div>
+        </div>
+        <div class="match-card" onclick="initGame('BGMI')">
+            <img src="https://images.moneycontrol.com/static-mcnews/2021/05/Battlegrounds-Mobile-India.jpg" class="match-banner">
+            <div style="padding:15px; background:linear-gradient(transparent, #000); margin-top:-50px; position:relative;"><h2>BGMI</h2></div>
+        </div>
+        <h3 style="margin-top: 20px; font-family: 'Orbitron'; font-size: 14px; color: var(--primary);">MY BATTLES</h3>
+        <div id="home-joined-list"></div>
+    </div>
+
+    <!-- MATCHES LIST -->
+    <div id="page-home" class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 id="cat-title" style="font-family:'Orbitron';">BATTLES</h2>
+            <button onclick="tab('page-selector')" style="background:#222; color:#fff; border:none; padding:5px 12px; border-radius:8px;">BACK</button>
+        </div>
+        <div id="match-list"></div>
+    </div>
+
+    <!-- WALLET -->
+    <div id="page-wallet" class="container">
+        <div class="glass-card" style="text-align: center; background: var(--gradient);">
+            <p>BALANCE</p>
+            <h1 id="wall-balance" style="font-size: 45px; font-family: 'Orbitron';">🪙 0</h1>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn-premium" style="background:#fff; color:#000;" onclick="document.getElementById('add-money-ui').style.display='block'">ADD CASH</button>
+                <button class="btn-premium" style="background:rgba(0,0,0,0.5); color:#fff;" onclick="alert('Min. 200')">WITHDRAW</button>
+            </div>
+        </div>
+        <div id="add-money-ui" class="glass-card" style="display: none;">
+            <p style="font-size:12px;">Transfer to UPI: <b>admin@upi</b></p>
+            <input type="number" id="dep-amt" placeholder="Amount">
+            <input type="text" id="dep-txn" placeholder="Transaction ID">
+            <button class="btn-premium" onclick="submitDeposit()">SUBMIT</button>
+        </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div id="page-profile" class="container">
+        <div class="glass-card" style="text-align: center;">
+            <div style="width: 80px; height: 80px; background: #111; border-radius: 50%; margin: 0 auto 15px; border: 3px solid var(--primary); display: flex; align-items: center; justify-content: center; font-size: 30px;">👤</div>
+            <h2 id="prof-nick">Warrior</h2>
+            <button class="btn-premium" style="background: #222; margin-top: 30px;" onclick="tab('page-admin')">ADMIN CONTROL</button>
+            <button class="btn-premium" style="background: #400;" onclick="auth.signOut(); location.reload();">LOGOUT</button>
+        </div>
+    </div>
+
+    <!-- ADMIN -->
+    <div id="page-admin" class="container">
+        <div id="admin-login-view" class="glass-card">
+            <h3>MASTER ACCESS</h3>
+            <input type="password" id="admin-pass-key" placeholder="Master Key">
+            <button class="btn-premium" onclick="verifyAdmin()">UNLOCK</button>
+        </div>
+        <div id="admin-dashboard-view" style="display: none;">
+            <div class="glass-card">
+                <h3>CREATE MATCH</h3>
+                <select id="adm-cat"><option value="FF">FREE FIRE</option><option value="BGMI">BGMI</option></select>
+                <input type="text" id="adm-title" placeholder="Match Title">
+                <input type="number" id="adm-fee" placeholder="Entry Fee">
+                <input type="number" id="adm-prize" placeholder="Prize">
+                <button class="btn-premium" onclick="publishMatch()">PUBLISH</button>
+            </div>
+            <div class="glass-card">
+                <h3>DEPOSITS</h3>
+                <div id="admin-requests-list"></div>
+            </div>
+            <div class="glass-card">
+                <h3>MANAGE</h3>
+                <div id="admin-matches-manage"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RULES MODAL -->
+    <div id="rules-modal">
+        <div class="glass-card" style="width:100%;">
+            <h3 style="font-family:'Orbitron'; color:var(--primary);">MATCH RULES</h3>
+            <ul style="font-size:11px; color:#ccc; margin:15px 0; padding-left:15px;">
+                <li>No Hacks/Emulators allowed.</li>
+                <li>Room ID/Pass will be given 10 mins before.</li>
+                <li>Prizes updated within 2 hours.</li>
+                <li>Minimum level 30 required.</li>
+            </ul>
+            <button class="btn-premium" onclick="document.getElementById('rules-modal').style.display='none'">I UNDERSTAND</button>
+        </div>
+    </div>
+
+    <nav id="navbar">
+        <div onclick="tab('page-selector', this)" id="nav-home" class="nav-active"><i class="fa-solid fa-gamepad"></i>Games</div>
+        <div onclick="tab('page-wallet', this)"><i class="fa-solid fa-wallet"></i>Wallet</div>
+        <div onclick="tab('page-profile', this)"><i class="fa-solid fa-user-shield"></i>Profile</div>
+    </nav>
+
+    <script>
+        const firebaseConfig = {
+          apiKey: "AIzaSyBPtYhAP-NxX1U72tjVrvR80pyxskvnP6k",
+          authDomain: "ff-turnament-pro-max.firebaseapp.com",
+          databaseURL: "https://ff-turnament-pro-max-default-rtdb.asia-southeast1.firebasedatabase.app",
+          projectId: "ff-turnament-pro-max",
+          storageBucket: "ff-turnament-pro-max.firebasestorage.app",
+          messagingSenderId: "973624813470",
+          appId: "1:973624813470:web:2c3c85d3832754026a188f"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+        let userData = null;
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                db.ref('users/' + user.uid).on('value', snap => {
+                    if (snap.exists()) {
+                        userData = snap.val();
+                        document.getElementById('page-auth').style.display = 'none';
+                        showApp();
+                    } else {
+                        document.getElementById('page-auth').style.display = 'block';
+                        document.getElementById('login-form').style.display = 'none';
+                        document.getElementById('extra-details-form').style.display = 'block';
+                    }
+                    document.getElementById('preloader').style.display = 'none';
+                });
+            } else {
+                document.getElementById('page-auth').style.display = 'block';
+                document.getElementById('preloader').style.display = 'none';
+            }
+        });
+
+        function showApp() {
+            document.getElementById('main-header').style.display = 'flex';
+            document.getElementById('navbar').style.display = 'flex';
+            if(!document.querySelector('.container.active')) tab('page-selector');
+            
+            document.getElementById('top-balance').innerText = userData.balance || 0;
+            document.getElementById('wall-balance').innerText = "🪙 " + (userData.balance || 0);
+            document.getElementById('prof-nick').innerText = userData.nickname || "Warrior";
+            document.getElementById('stat-uid').innerText = userData.userId || "---";
+            document.getElementById('stat-played').innerText = (userData.joined || []).length;
+
+            db.ref('tournaments').on('value', snap => {
+                window.matches = snap.val() ? Object.values(snap.val()) : [];
+                renderMatches(); renderMyMatches(); renderAdminMatches();
+            });
+            db.ref('requests').on('value', snap => renderAdminRequests(snap.val()));
         }
 
+        function tab(id, el) {
+            document.querySelectorAll('.container').forEach(c => c.style.display = 'none');
+            document.getElementById(id).style.display = 'block';
+            if(el) {
+                document.querySelectorAll('nav div').forEach(n => n.classList.remove('nav-active'));
+                el.classList.add('nav-active');
+            }
+        }
+
+        function handleLogin() {
+            auth.signInWithEmailAndPassword(document.getElementById('log-email').value, document.getElementById('log-pass').value).catch(e => alert(e.message));
+        }
+
+        function handleRegister() {
+            const e = document.getElementById('reg-email').value;
+            auth.createUserWithEmailAndPassword(e, document.getElementById('reg-pass').value).then(res => {
+                db.ref('users/' + res.user.uid).set({ uid: res.user.uid, userId: Math.floor(100000 + Math.random()*900000), nickname: document.getElementById('reg-nick').value, balance: 10, email: e, joined: [] });
+            }).catch(e => alert(e.message));
+        }
+
+        async function handleGoogleLogin() { try { await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); } catch(e) { alert(e.message); } }
+
+        async function saveExtraDetails() {
+            const nick = document.getElementById('extra-nick').value;
+            if(!nick) return alert("Required");
+            await db.ref('users/' + auth.currentUser.uid).set({ uid: auth.currentUser.uid, userId: Math.floor(100000 + Math.random()*900000), nickname: nick, balance: 10, email: auth.currentUser.email, joined: [] });
+        }
+
+        function initGame(cat) { window.currentCat = cat; document.getElementById('cat-title').innerText = cat + " BATTLES"; tab('page-home'); renderMatches(); }
+
+        function renderMatches() {
+            const list = document.getElementById('match-list'); list.innerHTML = "";
+            const filtered = (window.matches || []).filter(m => m.category === window.currentCat);
+            filtered.forEach(m => {
+                const joined = userData.joined && userData.joined.includes(m.id);
+                list.innerHTML += `<div class="match-card"><div class="match-info"><h3>${m.title}</h3>
+                <p style="font-size:12px; color:gray; margin-top:5px;">Entry: 🪙${m.fee} | Prize: 🪙${m.prize}</p>
+                <div class="slot-bar"><div class="slot-fill" style="width:${(m.slots || 0)}%"></div></div>
+                <div style="display:flex; gap:10px;"><button class="btn-premium" onclick="document.getElementById('rules-modal').style.display='flex'" style="background:#222; width:40%;">RULES</button>
+                <button class="btn-premium" style="width:60%;" ${joined ? 'disabled' : `onclick="joinMatch('${m.id}', ${m.fee})"`}>${joined ? 'JOINED ✅' : 'JOIN NOW'}</button></div></div></div>`;
+            });
+        }
+
+        async function joinMatch(id, fee) {
+            if((userData.balance || 0) < fee) return alert("Low balance!");
+            if(confirm("Join Match?")) {
+                let joined = userData.joined || []; joined.push(id);
+                db.ref('tournaments/' + id).once('value', s => { db.ref('tournaments/' + id).update({ slots: (s.val().slots || 0) + 1 }); });
+                await db.ref('users/' + auth.currentUser.uid).update({ balance: userData.balance - fee, joined: joined });
+            }
+        }
+
+        function renderMyMatches() {
+            const div = document.getElementById('home-joined-list'); div.innerHTML = "";
+            const mine = (window.matches || []).filter(m => userData.joined && userData.joined.includes(m.id));
+            if(!mine.length) div.innerHTML = "<p style='color:gray; font-size:11px;'>No battles joined.</p>";
+            mine.forEach(m => {
+                div.innerHTML += `<div class="glass-card"><b>${m.title}</b><br><div style="background:#000; padding:10px; margin-top:10px; border-radius:10px; font-size:12px; color:var(--accent);">Room ID: ${m.roomId || 'Wait'} | Pass: ${m.roomPass || 'Wait'}</div></div>`;
+            });
+        }
+
+        function submitDeposit() {
+            const rid = Date.now();
+            db.ref('requests/' + rid).set({ id: rid, uid: auth.currentUser.uid, amount: parseInt(document.getElementById('dep-amt').value), txn: document.getElementById('dep-txn').value, status: 'pending' });
+            alert("Sent!");
+            document.getElementById('add-money-ui').style.display='none';
+        }
+
+        function verifyAdmin() { if(document.getElementById('admin-pass-key').value === 'Shyam 100') { document.getElementById('admin-login-view').style.display='none'; document.getElementById('admin-dashboard-view').style.display='block'; } }
+
+        function publishMatch() {
+            const id = Date.now();
+            db.ref('tournaments/' + id).set({ id: id, title: document.getElementById('adm-title').value, category: document.getElementById('adm-cat').value, fee: parseInt(document.getElementById('adm-fee').value), prize: parseInt(document.getElementById('adm-prize').value), slots: 0 });
+        }
+
+        function renderAdminRequests(data) {
+            const div = document.getElementById('admin-requests-list'); div.innerHTML = "";
+            if(!data) return;
+            Object.values(data).forEach(r => {
+                if(r.status === 'pending') div.innerHTML += `<div class="glass-card" style="font-size:12px;">Amt: ${r.amount} <button onclick="approvePay('${r.id}','${r.uid}',${r.amount})">OK</button></div>`;
+            });
+        }
+
+        async function approvePay(rid, uid, amt) {
+            db.ref('users/' + uid).once('value', s => { db.ref('users/' + uid).update({ balance: (s.val().balance || 0) + amt }); db.ref('requests/' + rid).update({ status: 'done' }); });
+        }
+
+        function renderAdminMatches() {
+            const div = document.getElementById('admin-matches-manage'); div.innerHTML = "";
+            (window.matches || []).forEach(m => {
+                div.innerHTML += `<div class="glass-card" style="font-size:12px;"><b>${m.title}</b><input id="ri-${m.id}" placeholder="Room ID" value="${m.roomId || ''}"><input id="rp-${m.id}" placeholder="Pass" value="${m.roomPass || ''}"><button onclick="upRoom('${m.id}')" style="background:orange; width:100%; margin-top:5px; border:none; padding:5px; border-radius:5px; color:#fff;">UPDATE</button><button onclick="deleteMatch('${m.id}')" style="background:red; width:100%; margin-top:5px; border:none; padding:5px; border-radius:5px; color:#fff;">DELETE</button></div>`;
+            });
+        }
+
+        function upRoom(id) { db.ref('tournaments/' + id).update({ roomId: document.getElementById('ri-'+id).value, roomPass: document.getElementById('rp-'+id).value }); alert("Updated"); }
+        function deleteMatch(id) { if(confirm("Delete?")) db.ref('tournaments/' + id).remove(); }
+        function toggleAuth(isLogin) { document.getElementById('login-form').style.display = isLogin ? 'block' : 'none'; document.getElementById('register-form').style.display = isLogin ? 'none' : 'block'; }
+    </script>
+</body>
+    </html>
         /* PRELOADER */
         #preloader { 
             position: fixed; width: 100%; height: 100vh; background: #000; 
