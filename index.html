@@ -2,39 +2,571 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESPORTS PRO MAX | OFFICIAL APP</title>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ESPORTS PRO ARENA | ULTIMATE</title>
     
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;900&family=Poppins:wght@200;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Firebase SDK (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
     <style>
         :root {
-            --primary: #ff8c00;
+            --primary: #ff8c00; 
             --secondary: #ff0055;
             --accent: #00f2ff;
             --bg-dark: #050505;
-            --bg-card: #121214;
+            --bg-card: #0f0f12;
             --text-main: #ffffff;
-            --text-dim: #a0a0a0;
-            --glass: rgba(255, 255, 255, 0.05);
-            --neon-shadow: 0 0 20px rgba(255, 140, 0, 0.5);
+            --text-dim: #b0b0b0;
+            --glass: rgba(255, 255, 255, 0.03);
+            --neon-shadow: 0 0 15px rgba(255, 140, 0, 0.3);
+            --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-        body {
-            margin: 0;
-            font-family: 'Poppins', sans-serif;
-            background: var(--bg-dark);
-            color: var(--text-main);
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        
+        body { 
+            margin: 0; 
+            font-family: 'Poppins', sans-serif; 
+            background: var(--bg-dark); 
+            color: var(--text-main); 
             overflow-x: hidden;
-            scroll-behavior: smooth;
+            background-image: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #050505 100%);
         }
 
         /* --- PRELOADER --- */
-        #preloader {
-            position: fixed; width: 100%; height: 100vh; background: #000;
-            z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        #preloader { 
+            position: fixed; width: 100%; height: 100vh; background: #000; 
+            z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; 
+        }
+        .loader-box { text-align: center; }
+        .loader-logo { 
+            font-family: 'Orbitron'; font-size: 28px; color: var(--primary); 
+            text-shadow: var(--neon-shadow); animation: glow 1.5s infinite alternate; 
+        }
+        @keyframes glow { from { opacity: 0.5; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        /* --- UI HELPERS --- */
+        .container { display: none; padding: 20px; min-height: 100vh; padding-bottom: 110px; animation: slideUp 0.5s ease-out; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .glass-card { 
+            background: var(--glass); backdrop-filter: blur(15px); 
+            border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; 
+            padding: 20px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .btn-premium { 
+            background: var(--gradient); border: none; color: white; padding: 14px; 
+            border-radius: 15px; font-family: 'Orbitron'; font-weight: bold; 
+            cursor: pointer; width: 100%; margin-top: 10px; font-size: 14px;
+            transition: 0.3s; box-shadow: var(--neon-shadow);
+        }
+        .btn-premium:active { transform: scale(0.95); }
+
+        input, select { 
+            width: 100%; background: rgba(0,0,0,0.6); border: 1px solid #222; 
+            color: #fff; padding: 14px; border-radius: 12px; margin-top: 12px; 
+            font-size: 14px; border-left: 3px solid var(--primary);
+        }
+
+        /* --- HEADER & NAV --- */
+        header { 
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+            padding: 15px 25px; display: none; justify-content: space-between; 
+            align-items: center; position: sticky; top: 0; z-index: 2000; 
+            border-bottom: 1px solid rgba(255,255,255,0.05); 
+        }
+        .brand-text { font-family: 'Orbitron'; font-weight: 900; font-size: 20px; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        nav { 
+            position: fixed; bottom: 0; width: 100%; background: #0a0a0c; 
+            display: none; justify-content: space-around; padding: 15px 0; 
+            border-top: 1px solid #1a1a1a; z-index: 2000; border-radius: 25px 25px 0 0;
+        }
+        nav div { color: var(--text-dim); text-align: center; font-size: 11px; cursor: pointer; transition: 0.3s; }
+        nav div i { font-size: 20px; display: block; margin-bottom: 5px; }
+        nav div.nav-active { color: var(--primary); transform: translateY(-5px); text-shadow: 0 0 10px var(--primary); }
+
+        /* --- PAGES --- */
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .stat-item { background: rgba(255,255,255,0.03); padding: 10px; border-radius: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
+        .stat-item span { display: block; font-size: 16px; font-weight: bold; color: var(--accent); }
+        .stat-item label { font-size: 9px; color: var(--text-dim); text-transform: uppercase; }
+
+        .match-card { 
+            background: var(--bg-card); border-radius: 25px; margin-bottom: 25px; 
+            overflow: hidden; border: 1px solid #1a1a1a; position: relative;
+        }
+        .match-banner { height: 120px; width: 100%; object-fit: cover; opacity: 0.7; }
+        .match-info { padding: 15px; }
+        .match-title { font-family: 'Orbitron'; font-size: 16px; margin: 0; }
+        .match-meta { display: flex; justify-content: space-between; margin-top: 10px; font-size: 12px; color: var(--text-dim); }
+        
+        .slot-bar { height: 6px; background: #222; border-radius: 10px; margin-top: 15px; overflow: hidden; }
+        .slot-fill { height: 100%; background: var(--gradient); width: 0%; transition: 1s; }
+
+        /* --- ADMIN DASH --- */
+        .admin-req-card { background: #16161a; padding: 15px; border-radius: 15px; margin-bottom: 10px; border-left: 4px solid var(--accent); }
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; }
+        .badge-win { background: rgba(0, 255, 128, 0.1); color: #00ff80; }
+
+    </style>
+</head>
+<body>
+
+    <!-- PRELOADER -->
+    <div id="preloader">
+        <div class="loader-box">
+            <div class="loader-logo">E-PRO ARENA</div>
+            <p style="font-size: 10px; color: gray; letter-spacing: 2px;">LOADING SYSTEM...</p>
+        </div>
+    </div>
+
+    <!-- HEADER -->
+    <header id="main-header">
+        <div class="brand-text">ARENA PRO</div>
+        <div onclick="tab('page-wallet', document.getElementById('nav-wallet'))" style="background:#1a1a1a; padding:8px 15px; border-radius:30px; border:1px solid var(--primary); font-size:14px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-coins" style="color: gold;"></i> <span id="top-balance" style="font-weight: bold;">0</span>
+        </div>
+    </header>
+
+    <!-- AUTH SECTION -->
+    <div id="page-auth" class="container" style="padding-top: 60px; text-align: center;">
+        <h1 style="font-family: 'Orbitron'; font-weight: 900; font-size: 32px; color: #fff;">WELCOME <span style="color: var(--primary);">WARRIOR</span></h1>
+        <p style="color: gray; font-size: 12px;">Login to access tournaments and win rewards.</p>
+
+        <div id="login-form" class="glass-card" style="margin-top: 30px;">
+            <input type="email" id="log-email" placeholder="Email Address">
+            <input type="password" id="log-pass" placeholder="Password">
+            <button class="btn-premium" onclick="handleLogin()">LOGIN TO ACCOUNT</button>
+            <div style="margin: 20px 0; color: gray; font-size: 12px;">OR</div>
+            <button onclick="handleGoogleLogin()" style="background: white; color: black; border: none; padding: 12px; width: 100%; border-radius: 12px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_Logo.svg" width="18"> CONTINUE WITH GOOGLE
+            </button>
+            <p onclick="toggleAuth(false)" style="margin-top: 25px; font-size: 13px; color: var(--accent); cursor: pointer; text-decoration: underline;">Create New Account</p>
+        </div>
+
+        <div id="register-form" class="glass-card" style="display: none; margin-top: 30px;">
+            <h3 style="font-family: 'Orbitron'; font-size: 18px;">JOIN THE ARENA</h3>
+            <input type="text" id="reg-nick" placeholder="Gaming Name (IGN)">
+            <input type="email" id="reg-email" placeholder="Email Address">
+            <input type="password" id="reg-pass" placeholder="Create Password">
+            <button class="btn-premium" onclick="handleRegister()">CREATE PROFILE</button>
+            <p onclick="toggleAuth(true)" style="margin-top: 25px; font-size: 13px; color: var(--text-dim); cursor: pointer;">Already a member? Login</p>
+        </div>
+
+        <div id="extra-details-form" class="glass-card" style="display: none; margin-top: 30px;">
+            <h3 style="font-family: 'Orbitron';">SET NICKNAME</h3>
+            <p style="font-size: 11px; color: gray;">You are logged in with Google. Choose your game name.</p>
+            <input type="text" id="extra-nick" placeholder="Game Nickname">
+            <button class="btn-premium" onclick="saveExtraDetails()">COMPLETE PROFILE</button>
+        </div>
+    </div>
+
+    <!-- HOME PAGE -->
+    <div id="page-selector" class="container">
+        <div class="glass-card">
+            <h4 style="margin:0; font-family: 'Orbitron'; font-size: 14px;">WARRIOR DASHBOARD</h4>
+            <div class="stat-grid">
+                <div class="stat-item"><span id="stat-played">0</span><label>Played</label></div>
+                <div class="stat-item"><span id="stat-won">0</span><label>Wins</label></div>
+                <div class="stat-item"><span id="stat-earned">0</span><label>Earned</label></div>
+            </div>
+        </div>
+
+        <h3 style="font-family: 'Orbitron'; font-size: 16px; margin-top: 30px; color: var(--primary);">SELECT GAME</h3>
+        <div style="display: grid; gap: 15px;">
+            <div class="match-card" onclick="initGame('FF')">
+                <img src="https://images8.alphacoders.com/105/1052602.jpg" class="match-banner">
+                <div style="position: absolute; bottom: 0; width: 100%; padding: 15px; background: linear-gradient(to top, #000, transparent);">
+                    <h2 style="font-family: 'Orbitron'; margin:0;">FREE FIRE</h2>
+                    <p style="font-size: 10px; color: var(--accent);">LIVE TOURNAMENTS AVAILABLE</p>
+                </div>
+            </div>
+            <div class="match-card" onclick="initGame('BGMI')">
+                <img src="https://images.moneycontrol.com/static-mcnews/2021/05/Battlegrounds-Mobile-India.jpg" class="match-banner">
+                <div style="position: absolute; bottom: 0; width: 100%; padding: 15px; background: linear-gradient(to top, #000, transparent);">
+                    <h2 style="font-family: 'Orbitron'; margin:0;">BGMI</h2>
+                    <p style="font-size: 10px; color: var(--accent);">CHALLENGERS READY</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MATCHES LISTING -->
+    <div id="page-home" class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+            <h2 id="cat-title" style="font-family:'Orbitron'; font-size: 20px; margin:0;">BATTLES</h2>
+            <div onclick="tab('page-selector')" style="font-size: 12px; color: var(--accent); border: 1px solid var(--accent); padding: 5px 12px; border-radius: 10px;">BACK</div>
+        </div>
+        <div id="match-list"></div>
+    </div>
+
+    <!-- WALLET PAGE -->
+    <div id="page-wallet" class="container">
+        <div class="glass-card" style="text-align: center; padding: 40px 20px; background: var(--gradient);">
+            <p style="margin:0; font-size: 13px; opacity: 0.8;">YOUR BALANCE</p>
+            <h1 id="wall-balance" style="font-size: 52px; font-family: 'Orbitron'; margin: 10px 0;">🪙 0</h1>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button onclick="document.getElementById('add-money-ui').style.display='block'" style="flex:1; background:#fff; color:#000; border:none; padding:12px; border-radius:12px; font-weight:bold;">ADD CASH</button>
+                <button style="flex:1; background:rgba(0,0,0,0.3); color:#fff; border:1px solid #fff; padding:12px; border-radius:12px; font-weight:bold;">WITHDRAW</button>
+            </div>
+        </div>
+
+        <div id="add-money-ui" class="glass-card" style="display: none;">
+            <h4 style="font-family: 'Orbitron'; margin-top:0;">DEPOSIT MONEY</h4>
+            <p style="font-size: 11px; color: gray;">SEND TO UPI: <b style="color: #fff;">admin@upi</b></p>
+            <input type="number" id="dep-amt" placeholder="Amount (Min. 50)">
+            <input type="text" id="dep-txn" placeholder="UTR / Transaction ID">
+            <button class="btn-premium" onclick="submitDeposit()">SUBMIT REQUEST</button>
+        </div>
+
+        <h3 style="font-family: 'Orbitron'; font-size: 16px; margin-top: 30px;">TRANSACTION HISTORY</h3>
+        <div id="wallet-history">
+            <p style="color: gray; font-size: 12px;">No transactions yet.</p>
+        </div>
+    </div>
+
+    <!-- PROFILE PAGE -->
+    <div id="page-profile" class="container">
+        <div class="glass-card" style="text-align: center;">
+            <div style="width: 100px; height: 100px; background: #1a1a1a; border-radius: 50%; margin: 0 auto 15px; border: 4px solid var(--primary); display: flex; align-items: center; justify-content: center; font-size: 40px;">👤</div>
+            <h2 id="prof-nick-display" style="margin:0; font-family: 'Orbitron';">Warrior</h2>
+            <p style="color: var(--primary); font-family: 'Orbitron'; font-size: 14px; margin: 5px 0;">UID: <span id="prof-uid-display">000000</span></p>
+            <p id="prof-email-display" style="font-size: 12px; color: gray;"></p>
+            
+            <button class="btn-premium" style="background: #222; margin-top: 20px;" onclick="tab('page-admin')">ADMIN CONTROL 🔒</button>
+            <button class="btn-premium" style="background: #330000; color: #ff3333; margin-top: 10px;" onclick="auth.signOut(); location.reload();">LOGOUT ACCOUNT</button>
+        </div>
+
+        <div class="glass-card" style="margin-top: 20px;">
+            <h4 style="margin:0; font-family: 'Orbitron'; font-size: 14px;">SUPPORT & HELP</h4>
+            <p style="font-size: 11px; color: gray; margin-top: 10px;"><i class="fa-solid fa-envelope"></i> help@eproarena.com</p>
+            <p style="font-size: 11px; color: gray;"><i class="fa-brands fa-whatsapp"></i> +91 9876543210</p>
+        </div>
+    </div>
+
+    <!-- ADMIN SECTION -->
+    <div id="page-admin" class="container">
+        <div id="admin-login-view">
+            <div class="glass-card" style="text-align: center; padding: 40px 20px;">
+                <h2 style="font-family: 'Orbitron';">ADMIN ACCESS</h2>
+                <p style="font-size: 12px; color: gray;">Only authorized owners can access this.</p>
+                <input type="password" id="admin-pass-key" placeholder="Enter Secret Master Key">
+                <button class="btn-premium" onclick="verifyAdmin()">UNLOCK DASHBOARD</button>
+            </div>
+        </div>
+
+        <div id="admin-dashboard-view" style="display: none;">
+            <h2 style="font-family: 'Orbitron'; color: var(--primary);">MASTER CONTROL</h2>
+            
+            <div class="glass-card">
+                <h3>CREATE TOURNAMENT</h3>
+                <select id="adm-cat"><option value="FF">FREE FIRE</option><option value="BGMI">BGMI</option></select>
+                <input type="text" id="adm-match-title" placeholder="Match Title (e.g. Solo Erangel)">
+                <input type="number" id="adm-match-fee" placeholder="Entry Fee">
+                <input type="number" id="adm-match-prize" placeholder="Total Prize Pool">
+                <button class="btn-premium" onclick="publishMatch()">🚀 PUBLISH NOW</button>
+            </div>
+
+            <div class="glass-card">
+                <h3>PENDING DEPOSITS</h3>
+                <div id="admin-requests-list"></div>
+            </div>
+
+            <div class="glass-card">
+                <h3>MANAGE MATCHES</h3>
+                <div id="admin-matches-manage"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NAVIGATION -->
+    <nav id="navbar">
+        <div onclick="tab('page-selector', this)" id="nav-home" class="nav-active"><i class="fa-solid fa-gamepad"></i>Games</div>
+        <div onclick="tab('page-wallet', this)" id="nav-wallet"><i class="fa-solid fa-wallet"></i>Wallet</div>
+        <div onclick="tab('page-profile', this)"><i class="fa-solid fa-user-shield"></i>Profile</div>
+    </nav>
+
+    <script>
+        // --- FIREBASE SETUP ---
+        const firebaseConfig = {
+          apiKey: "AIzaSyBPtYhAP-NxX1U72tjVrvR80pyxskvnP6k",
+          authDomain: "ff-turnament-pro-max.firebaseapp.com",
+          databaseURL: "https://ff-turnament-pro-max-default-rtdb.asia-southeast1.firebasedatabase.app",
+          projectId: "ff-turnament-pro-max",
+          storageBucket: "ff-turnament-pro-max.firebasestorage.app",
+          messagingSenderId: "973624813470",
+          appId: "1:973624813470:web:2c3c85d3832754026a188f"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+        let userData = null;
+
+        function generateUID() { return Math.floor(100000 + Math.random() * 900000); }
+
+        // --- AUTH LOGIC ---
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                db.ref('users/' + user.uid).on('value', snap => {
+                    if (snap.exists()) {
+                        userData = snap.val();
+                        document.getElementById('page-auth').style.display = 'none';
+                        showApp();
+                    } else {
+                        document.getElementById('page-auth').style.display = 'block';
+                        document.getElementById('login-form').style.display = 'none';
+                        document.getElementById('extra-details-form').style.display = 'block';
+                    }
+                    document.getElementById('preloader').style.display = 'none';
+                });
+            } else {
+                document.getElementById('page-auth').style.display = 'block';
+                document.getElementById('main-header').style.display = 'none';
+                document.getElementById('navbar').style.display = 'none';
+                document.getElementById('preloader').style.display = 'none';
+            }
+        });
+
+        function showApp() {
+            document.getElementById('main-header').style.display = 'flex';
+            document.getElementById('navbar').style.display = 'flex';
+            
+            if(!document.querySelector('.container.active') || document.querySelector('.container.active').id == 'page-auth') {
+                tab('page-selector', document.getElementById('nav-home'));
+            }
+            
+            document.getElementById('top-balance').innerText = userData.balance || 0;
+            document.getElementById('wall-balance').innerText = "🪙 " + (userData.balance || 0);
+            document.getElementById('prof-nick-display').innerText = userData.nickname || "Warrior";
+            document.getElementById('prof-uid-display').innerText = userData.userId || "000000";
+            document.getElementById('prof-email-display').innerText = userData.email || "";
+
+            // User Stats
+            document.getElementById('stat-played').innerText = (userData.joinedMatches || []).length;
+
+            db.ref('tournaments').on('value', snap => {
+                window.matches = snap.val() ? Object.values(snap.val()) : [];
+                renderMatches(); renderAdminMatches();
+            });
+            db.ref('requests').on('value', snap => renderAdminRequests(snap.val()));
+        }
+
+        // --- UI ACTIONS ---
+        function tab(id, el) {
+            document.querySelectorAll('.container').forEach(c => c.style.display = 'none');
+            document.getElementById(id).style.display = 'block';
+            if(el) {
+                document.querySelectorAll('nav div').forEach(n => n.classList.remove('nav-active'));
+                el.classList.add('nav-active');
+            }
+        }
+
+        function toggleAuth(isLogin) {
+            document.getElementById('login-form').style.display = isLogin ? 'block' : 'none';
+            document.getElementById('register-form').style.display = isLogin ? 'none' : 'block';
+        }
+
+        function handleLogin() {
+            const e = document.getElementById('log-email').value;
+            const p = document.getElementById('log-pass').value;
+            auth.signInWithEmailAndPassword(e, p).catch(err => alert(err.message));
+        }
+
+        function handleRegister() {
+            const e = document.getElementById('reg-email').value;
+            const p = document.getElementById('reg-pass').value;
+            const n = document.getElementById('reg-nick').value;
+            auth.createUserWithEmailAndPassword(e, p).then(res => {
+                db.ref('users/' + res.user.uid).set({ uid: res.user.uid, userId: generateUID(), nickname: n, balance: 10, email: e, joinedMatches: [] });
+            }).catch(err => alert(err.message));
+        }
+
+        async function handleGoogleLogin() {
+            try { await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); } catch (e) { alert(e.message); }
+        }
+
+        async function saveExtraDetails() {
+            const nick = document.getElementById('extra-nick').value;
+            if(!nick) return alert("Nickname required!");
+            await db.ref('users/' + auth.currentUser.uid).set({
+                uid: auth.currentUser.uid, userId: generateUID(), nickname: nick, balance: 10, email: auth.currentUser.email, joinedMatches: []
+            });
+        }
+
+        // --- MATCH LOGIC ---
+        function initGame(cat) { 
+            window.currentCat = cat; 
+            document.getElementById('cat-title').innerText = cat + " TOURNAMENTS"; 
+            tab('page-home'); 
+            renderMatches(); 
+        }
+
+        function renderMatches() {
+            const list = document.getElementById('match-list'); list.innerHTML = "";
+            const filtered = (window.matches || []).filter(m => m.category === window.currentCat);
+            
+            if(filtered.length === 0) list.innerHTML = "<p style='text-align:center; color:gray; padding:20px;'>No Matches Live Now.</p>";
+
+            filtered.forEach(m => {
+                const joined = userData.joinedMatches && userData.joinedMatches.includes(m.id);
+                const slots = m.slots || 0;
+                const fillPercent = (slots / 100) * 100;
+
+                list.innerHTML += `
+                    <div class="match-card">
+                        <div class="match-info">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <h3 class="match-title">${m.title}</h3>
+                                <span class="badge ${joined ? 'badge-win' : ''}">${joined ? 'ENROLLED' : 'OPEN'}</span>
+                            </div>
+                            <div class="match-meta">
+                                <span><i class="fa-solid fa-money-bill"></i> Entry: 🪙${m.fee || 20}</span>
+                                <span><i class="fa-solid fa-trophy"></i> Prize: 🪙${m.prize || 500}</span>
+                            </div>
+                            <div class="slot-bar"><div class="slot-fill" style="width: ${fillPercent}%"></div></div>
+                            <div style="display:flex; justify-content:space-between; font-size:10px; margin-top:5px; color:gray;">
+                                <span>${slots}/100 Slots filled</span>
+                                <span>Only ${100 - slots} left</span>
+                            </div>
+                            <button class="btn-premium" style="margin-top:15px; border-radius:10px;" ${joined ? 'disabled' : `onclick="joinMatch('${m.id}', ${m.fee})"`}>
+                                ${joined ? 'JOINED ✅' : 'JOIN MATCH NOW'}
+                            </button>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        async function joinMatch(id, fee) {
+            if((userData.balance || 0) < fee) return alert("Insufficient balance! Please add money.");
+            if(confirm("Join match for 🪙" + fee + "?")) {
+                let joined = userData.joinedMatches || [];
+                joined.push(id);
+                
+                // Get current slots
+                const matchRef = db.ref('tournaments/' + id);
+                matchRef.once('value', snap => {
+                    const currentSlots = snap.val().slots || 0;
+                    matchRef.update({ slots: currentSlots + 1 });
+                });
+
+                await db.ref('users/' + auth.currentUser.uid).update({ 
+                    balance: userData.balance - fee, 
+                    joinedMatches: joined 
+                });
+                alert("Match Joined Successfully!");
+            }
+        }
+
+        // --- WALLET ---
+        function submitDeposit() {
+            const amt = document.getElementById('dep-amt').value;
+            const txn = document.getElementById('dep-txn').value;
+            if(!amt || !txn) return alert("Fill all details!");
+            const rid = Date.now();
+            db.ref('requests/' + rid).set({ id: rid, uid: auth.currentUser.uid, amount: parseInt(amt), txn: txn, status: 'pending', time: new Date().toLocaleString() });
+            alert("Deposit Request Sent!");
+            document.getElementById('add-money-ui').style.display = 'none';
+        }
+
+        // --- ADMIN CONTROLS ---
+        function verifyAdmin() {
+            const key = document.getElementById('admin-pass-key').value;
+            if(key === 'Shyam 100') {
+                document.getElementById('admin-login-view').style.display = 'none';
+                document.getElementById('admin-dashboard-view').style.display = 'block';
+            } else { alert("Incorrect Master Key!"); }
+        }
+
+        function publishMatch() {
+            const id = Date.now();
+            const data = {
+                id: id,
+                title: document.getElementById('adm-match-title').value,
+                category: document.getElementById('adm-cat').value,
+                fee: parseInt(document.getElementById('adm-match-fee').value),
+                prize: parseInt(document.getElementById('adm-match-prize').value),
+                slots: 0,
+                roomId: "", roomPass: ""
+            };
+            db.ref('tournaments/' + id).set(data);
+            alert("Match Live Now!");
+        }
+
+        function renderAdminRequests(data) {
+            const div = document.getElementById('admin-requests-list'); div.innerHTML = "";
+            if(!data) { div.innerHTML = "<p style='color:gray; font-size:11px;'>No pending requests.</p>"; return; }
+            Object.values(data).forEach(r => {
+                if(r.status === 'pending') {
+                    div.innerHTML += `
+                        <div class="admin-req-card">
+                            <p style="margin:0; font-size:13px;">User: ${r.uid}</p>
+                            <p style="margin:5px 0; color:var(--primary); font-weight:bold;">Amount: 🪙${r.amount}</p>
+                            <p style="font-size:10px; color:gray;">TXN: ${r.txn}</p>
+                            <button onclick="approvePay('${r.id}','${r.uid}',${r.amount})" style="background:green; color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:bold;">APPROVE ✅</button>
+                        </div>`;
+                }
+            });
+        }
+
+        async function approvePay(rid, uid, amt) {
+            db.ref('users/' + uid).once('value', s => {
+                const curr = (s.val().balance || 0);
+                db.ref('users/' + uid).update({ balance: curr + amt });
+                db.ref('requests/' + rid).update({ status: 'approved' });
+                alert("Payment Approved!");
+            });
+        }
+
+        function renderAdminMatches() {
+            const div = document.getElementById('admin-matches-manage'); div.innerHTML = "";
+            (window.matches || []).forEach(m => {
+                div.innerHTML += `
+                    <div class="admin-req-card">
+                        <p style="margin:0; font-weight:bold;">${m.title}</p>
+                        <input id="ri-${m.id}" placeholder="Room ID" value="${m.roomId}" style="padding:8px; margin-top:5px;">
+                        <input id="rp-${m.id}" placeholder="Room Pass" value="${m.roomPass}" style="padding:8px; margin-top:5px;">
+                        <div style="display:flex; gap:5px; margin-top:10px;">
+                            <button onclick="upRoom('${m.id}')" style="background:orange; flex:1; padding:8px; border-radius:8px; border:none; color:white;">UPDATE</button>
+                            <button onclick="endMatch('${m.id}')" style="background:gray; flex:1; padding:8px; border-radius:8px; border:none; color:white;">END</button>
+                            <button onclick="deleteMatch('${m.id}')" style="background:red; flex:1; padding:8px; border-radius:8px; border:none; color:white;">DELETE</button>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        function upRoom(id) {
+            db.ref('tournaments/' + id).update({ 
+                roomId: document.getElementById('ri-'+id).value, 
+                roomPass: document.getElementById('rp-'+id).value 
+            });
+            alert("Room Info Updated!");
+        }
+
+        function deleteMatch(id) {
+            if(confirm("Are you sure you want to DELETE this match? This cannot be undone.")) {
+                db.ref('tournaments/' + id).remove();
+                alert("Match Deleted!");
+            }
+        }
+
+        function endMatch(id) {
+            if(confirm("End Match? This will notify users.")) {
+                db.ref('tournaments/' + id).update({ roomId: "ENDED", roomPass: "ENDED" });
+                alert("Match Marked as Ended.");
+            }
+        }
+    </script>
+</body>
+                    </html>            z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
         .loader-logo { font-family: 'Orbitron'; font-size: 30px; color: var(--primary); text-shadow: var(--neon-shadow); animation: pulse 1.5s infinite; }
         
